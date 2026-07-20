@@ -1,6 +1,6 @@
-# CareBridge HMS Prototype
+# UpsquareBridge HMS Prototype
 
-CareBridge HMS is a hospital management system prototype for both single-doctor clinics and multi-speciality clinics.
+UpsquareBridge HMS is a hospital management system prototype for both single-doctor clinics and multi-speciality clinics.
 
 ## Included
 
