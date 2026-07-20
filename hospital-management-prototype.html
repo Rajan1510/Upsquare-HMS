@@ -1,0 +1,813 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CareBridge HMS Prototype</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --ink: #162033;
+      --muted: #65728a;
+      --line: #dce3ee;
+      --primary: #0d7f80;
+      --primary-ink: #ffffff;
+      --accent: #f1b84b;
+      --danger: #c94444;
+      --ok: #15865f;
+      --soft: #eaf7f6;
+      --shadow: 0 14px 38px rgba(22, 32, 51, .09);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .app-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 248px minmax(0, 1fr);
+    }
+    .sidebar {
+      background: #12313f;
+      color: #f7fbff;
+      padding: 24px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      letter-spacing: .2px;
+    }
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: var(--primary);
+      color: var(--primary-ink);
+      font-weight: 800;
+    }
+    .role-switcher {
+      display: grid;
+      gap: 8px;
+      padding: 8px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 8px;
+      background: rgba(255,255,255,.06);
+    }
+    .role-switcher button, .nav button, .icon-btn {
+      border: 0;
+      border-radius: 7px;
+      padding: 10px 12px;
+      color: inherit;
+      background: transparent;
+      text-align: left;
+    }
+    .role-switcher button.active, .nav button.active {
+      background: rgba(255,255,255,.15);
+    }
+    .nav {
+      display: grid;
+      gap: 4px;
+    }
+    .nav button {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      color: #d9e7ef;
+    }
+    .main {
+      padding: 24px;
+      display: grid;
+      gap: 18px;
+      align-content: start;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+    .topbar h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 2.4vw, 2.2rem);
+      letter-spacing: 0;
+    }
+    .subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+    }
+    .quick-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .btn {
+      border: 1px solid var(--line);
+      color: var(--ink);
+      background: var(--panel);
+      border-radius: 7px;
+      padding: 10px 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 42px;
+    }
+    .btn.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: var(--primary-ink);
+    }
+    .btn.ghost {
+      background: transparent;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+    .span-3 { grid-column: span 3; }
+    .span-4 { grid-column: span 4; }
+    .span-5 { grid-column: span 5; }
+    .span-7 { grid-column: span 7; }
+    .span-8 { grid-column: span 8; }
+    .span-12 { grid-column: span 12; }
+    .stat {
+      display: grid;
+      gap: 8px;
+    }
+    .stat small, label, .muted { color: var(--muted); }
+    .stat strong {
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .section-head h2 {
+      margin: 0;
+      font-size: 1.05rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 11px 8px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: .88rem;
+    }
+    tr:last-child td { border-bottom: 0; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: .82rem;
+      background: var(--soft);
+      color: #0b6262;
+      white-space: nowrap;
+    }
+    .badge.warn { background: #fff4d9; color: #805b09; }
+    .badge.danger { background: #fde9e9; color: var(--danger); }
+    .badge.active { background: #e4f3ff; color: #0b5f8f; }
+    .badge.done { background: #eaf7ed; color: var(--ok); }
+    .clinic-mode {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      background: var(--panel);
+    }
+    .clinic-mode label {
+      white-space: nowrap;
+    }
+    .clinic-mode select {
+      min-height: 34px;
+      padding: 4px 28px 4px 8px;
+    }
+    .status-select {
+      min-width: 128px;
+      min-height: 34px;
+      padding: 4px 28px 4px 8px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      min-height: 42px;
+      padding: 9px 10px;
+      background: #fff;
+      color: var(--ink);
+    }
+    textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+    .timeline {
+      display: grid;
+      gap: 11px;
+    }
+    .timeline-item {
+      border-left: 3px solid var(--primary);
+      padding: 2px 0 2px 12px;
+    }
+    .timeline-item strong { display: block; }
+    .mobile-preview {
+      max-width: 360px;
+      margin: 0 auto;
+      border: 10px solid #111827;
+      border-radius: 28px;
+      overflow: hidden;
+      background: #fff;
+      min-height: 560px;
+    }
+    .phone-top {
+      background: #12313f;
+      color: #fff;
+      padding: 18px;
+    }
+    .phone-body {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+    .doctor-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+    }
+    .toast {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      background: #12313f;
+      color: #fff;
+      padding: 12px 14px;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      display: none;
+      max-width: min(420px, calc(100vw - 40px));
+      z-index: 10;
+    }
+    .toast.show { display: block; }
+    .hide { display: none !important; }
+
+    @media (max-width: 980px) {
+      .app-shell { grid-template-columns: 1fr; }
+      .sidebar {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        padding: 12px;
+        gap: 12px;
+      }
+      .brand { justify-content: space-between; }
+      .role-switcher, .nav {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .nav button, .role-switcher button {
+        justify-content: center;
+        text-align: center;
+      }
+      .main { padding: 16px; }
+      .span-3, .span-4, .span-5, .span-7, .span-8 { grid-column: span 6; }
+    }
+    @media (max-width: 680px) {
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .quick-actions { justify-content: flex-start; width: 100%; }
+      .btn { justify-content: center; flex: 1 1 auto; }
+      .clinic-mode { width: 100%; }
+      .clinic-mode select { flex: 1; }
+      .grid { grid-template-columns: 1fr; }
+      .span-3, .span-4, .span-5, .span-7, .span-8, .span-12 { grid-column: 1; }
+      .form-grid { grid-template-columns: 1fr; }
+      .role-switcher, .nav { grid-template-columns: 1fr 1fr; }
+      table { min-width: 940px; }
+      .table-wrap { overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">CB</span>
+        <span>CareBridge HMS</span>
+      </div>
+      <div class="role-switcher" aria-label="Role switcher">
+        <button class="active" data-role="patient">Patient</button>
+        <button data-role="doctor">Doctor</button>
+        <button data-role="admin">Hospital</button>
+      </div>
+      <nav class="nav" aria-label="Main navigation">
+        <button class="active" data-view="dashboard">Dashboard</button>
+        <button data-view="appointments">Appointments</button>
+        <button data-view="records">Records</button>
+        <button data-view="assistant">AI Assistant</button>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1 id="pageTitle">Patient care dashboard</h1>
+          <p class="subtitle" id="pageSubtitle">Book doctors, manage visits, and keep medical records in one secure place.</p>
+        </div>
+        <div class="quick-actions">
+          <div class="clinic-mode">
+            <label for="clinicMode">Clinic type</label>
+            <select id="clinicMode">
+              <option value="single">Single doctor</option>
+              <option value="multi">Multi speciality</option>
+            </select>
+          </div>
+          <button class="btn primary" id="newAppointmentBtn">Book appointment</button>
+          <button class="btn" id="saveDemoBtn">Save demo data</button>
+        </div>
+      </header>
+
+      <section id="dashboardView" class="view grid">
+        <article class="card stat span-3">
+          <small>Appointments today</small>
+          <strong id="todayCount">0</strong>
+          <span class="muted">Across OPD and teleconsultation</span>
+        </article>
+        <article class="card stat span-3">
+          <small>Waiting queue</small>
+          <strong id="waitingCount">0</strong>
+          <span class="muted">Patients waiting for consultation</span>
+        </article>
+        <article class="card stat span-3">
+          <small>Consulting now</small>
+          <strong id="consultingCount">0</strong>
+          <span class="muted">Inside doctor cabin or room</span>
+        </article>
+        <article class="card stat span-3">
+          <small id="clinicCapacityLabel">Cabins active</small>
+          <strong id="clinicCapacity">1</strong>
+          <span class="muted" id="clinicCapacityText">Single doctor clinic setup</span>
+        </article>
+
+        <article class="card span-7">
+          <div class="section-head">
+            <h2 id="scheduleTitle">OPD queue and room tracking</h2>
+            <span class="badge" id="clinicModeBadge">Single doctor clinic</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Queue</th><th>Time</th><th>Patient</th><th>Doctor</th><th>Room</th><th>Cabin</th><th>Reason</th><th>Status</th></tr>
+              </thead>
+              <tbody id="appointmentRows"></tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="card span-5">
+          <div class="section-head">
+            <h2>Reference-inspired modules</h2>
+          </div>
+          <div class="timeline">
+            <div class="timeline-item"><strong>Doctor discovery</strong><span class="muted">Search by city, speciality, symptom, availability, and fees.</span></div>
+            <div class="timeline-item"><strong>Patient medical records</strong><span class="muted">Visits, vitals, prescriptions, lab reports, invoices, and growth charts.</span></div>
+            <div class="timeline-item"><strong>Doctor workspace</strong><span class="muted">Queue number, waiting status, consulting status, room, cabin, EMR, e-prescription, lab orders, follow-ups, and teleconsults.</span></div>
+            <div class="timeline-item"><strong>Clinic mode</strong><span class="muted">Single doctor clinic uses one OPD room and cabin. Multi speciality uses departments, multiple rooms, and doctor-specific cabins.</span></div>
+            <div class="timeline-item"><strong>AI care assistant</strong><span class="muted">Natural-language booking, symptom intake, medication reminders, and record Q&A.</span></div>
+          </div>
+        </article>
+      </section>
+
+      <section id="appointmentsView" class="view grid hide">
+        <article class="card span-5">
+          <div class="section-head">
+            <h2>Book appointment</h2>
+          </div>
+          <form id="appointmentForm" class="form-grid">
+            <div class="field">
+              <label for="patientName">Patient name</label>
+              <input id="patientName" required value="Anaya Sharma">
+            </div>
+            <div class="field">
+              <label for="city">City</label>
+              <select id="city">
+                <option>Ahmedabad</option><option>Delhi</option><option>Mumbai</option><option>Hyderabad</option><option>Bangalore</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="speciality">Speciality</label>
+              <select id="speciality">
+                <option>Cardiologist</option><option>Dentist</option><option>Dermatologist</option><option>Physician</option><option>Gynecologist</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="doctor">Doctor</label>
+              <select id="doctor">
+                <option>Dr. Meera Patel</option><option>Dr. Aarav Shah</option><option>Dr. Kavya Rao</option><option>Dr. Imran Khan</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="roomNumber">Room number</label>
+              <input id="roomNumber" value="OPD-1">
+            </div>
+            <div class="field">
+              <label for="doctorCabin">Doctor cabin</label>
+              <input id="doctorCabin" value="Cabin 1">
+            </div>
+            <div class="field">
+              <label for="visitDate">Date</label>
+              <input id="visitDate" type="date" required>
+            </div>
+            <div class="field">
+              <label for="visitTime">Time</label>
+              <input id="visitTime" type="time" required value="10:30">
+            </div>
+            <div class="field" style="grid-column:1/-1">
+              <label for="reason">Reason</label>
+              <textarea id="reason">Chest discomfort after walking upstairs. No fever.</textarea>
+            </div>
+            <button class="btn primary" type="submit">Confirm booking</button>
+            <button class="btn" type="button" id="clearAppointments">Clear local bookings</button>
+          </form>
+        </article>
+
+        <article class="card span-7">
+          <div class="section-head">
+            <h2>Find doctors</h2>
+            <span class="badge warn">Patient app view</span>
+          </div>
+          <div class="mobile-preview">
+            <div class="phone-top">
+              <strong>Find care near you</strong>
+              <p class="subtitle" style="color:#d9e7ef">Doctors, tests, bookings, records</p>
+            </div>
+            <div class="phone-body">
+              <input id="doctorSearch" placeholder="Search symptom, doctor, speciality">
+              <div id="doctorCards"></div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section id="recordsView" class="view grid hide">
+        <article class="card span-8">
+          <div class="section-head">
+            <h2>Electronic medical record</h2>
+            <span class="badge">FHIR-ready model</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Date</th><th>Type</th><th>Summary</th><th>Owner</th></tr></thead>
+              <tbody>
+                <tr><td>20 Jul 2026</td><td>Consultation</td><td>Cardiology OPD. ECG advised. BP 132/86.</td><td>Dr. Meera Patel</td></tr>
+                <tr><td>15 Jul 2026</td><td>Lab</td><td>CBC normal, LDL mildly high, HbA1c 5.7%.</td><td>CareBridge Lab</td></tr>
+                <tr><td>03 Jun 2026</td><td>Prescription</td><td>Vitamin D3 weekly, walking plan, follow-up in 30 days.</td><td>Dr. Aarav Shah</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="card span-4">
+          <div class="section-head">
+            <h2>Doctor note</h2>
+          </div>
+          <div class="field">
+            <label for="clinicalNote">SOAP note</label>
+            <textarea id="clinicalNote">S: Patient reports exertional chest discomfort.
+O: BP 132/86, pulse 82, SpO2 98%.
+A: Rule out angina, anxiety differential.
+P: ECG, lipid profile, follow-up with reports.</textarea>
+          </div>
+          <div class="quick-actions" style="justify-content:flex-start;margin-top:12px">
+            <button class="btn primary" id="generateRx">Generate Rx</button>
+            <button class="btn" id="sendLab">Order lab</button>
+          </div>
+        </article>
+      </section>
+
+      <section id="assistantView" class="view grid hide">
+        <article class="card span-5">
+          <div class="section-head">
+            <h2>AI care assistant</h2>
+            <span class="badge danger">Human review required</span>
+          </div>
+          <div class="field">
+            <label for="aiInput">Ask or triage</label>
+            <textarea id="aiInput">I want to book a cardiologist tomorrow morning. I have mild chest discomfort when climbing stairs.</textarea>
+          </div>
+          <button class="btn primary" id="aiRun">Run assistant</button>
+        </article>
+        <article class="card span-7">
+          <div class="section-head">
+            <h2>Assistant output</h2>
+          </div>
+          <div id="aiOutput" class="timeline">
+            <div class="timeline-item"><strong>Ready</strong><span class="muted">The assistant can classify intent, collect missing details, draft booking steps, and summarize clinical risk for review.</span></div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const state = {
+      role: "patient",
+      view: "dashboard",
+      clinicMode: "single",
+      doctors: [
+        { name: "Dr. Meera Patel", speciality: "Cardiologist", city: "Ahmedabad", fee: "Rs. 900", next: "10:30 AM" },
+        { name: "Dr. Aarav Shah", speciality: "Physician", city: "Delhi", fee: "Rs. 650", next: "12:00 PM" },
+        { name: "Dr. Kavya Rao", speciality: "Dermatologist", city: "Mumbai", fee: "Rs. 800", next: "04:15 PM" },
+        { name: "Dr. Imran Khan", speciality: "Dentist", city: "Hyderabad", fee: "Rs. 700", next: "06:00 PM" }
+      ],
+      appointments: []
+    };
+
+    const clinicProfiles = {
+      single: {
+        label: "Single doctor clinic",
+        capacityLabel: "Cabins active",
+        capacity: 1,
+        capacityText: "Single doctor clinic setup",
+        defaultRoom: "OPD-1",
+        defaultCabin: "Cabin 1",
+        appointments: [
+          { queue: "Q-01", time: "09:30", patient: "Anaya Sharma", doctor: "Dr. Meera Patel", room: "OPD-1", cabin: "Cabin 1", reason: "Chest discomfort", status: "Consulting" },
+          { queue: "Q-02", time: "10:15", patient: "Rohan Iyer", doctor: "Dr. Meera Patel", room: "Waiting", cabin: "Cabin 1", reason: "Fever follow-up", status: "Waiting" },
+          { queue: "Q-03", time: "10:30", patient: "Nisha Mehta", doctor: "Dr. Meera Patel", room: "Waiting", cabin: "Cabin 1", reason: "Skin rash", status: "In queue" },
+          { queue: "Q-04", time: "11:00", patient: "Dev Patel", doctor: "Dr. Meera Patel", room: "OPD-1", cabin: "Cabin 1", reason: "Diabetes review", status: "Completed" }
+        ]
+      },
+      multi: {
+        label: "Multi speciality clinic",
+        capacityLabel: "Rooms active",
+        capacity: 6,
+        capacityText: "Departments, rooms, and doctor cabins",
+        defaultRoom: "Cardio-2",
+        defaultCabin: "Cabin C2",
+        appointments: [
+          { queue: "C-01", time: "09:30", patient: "Anaya Sharma", doctor: "Dr. Meera Patel", room: "Cardio-2", cabin: "Cabin C2", reason: "Chest discomfort", status: "Consulting" },
+          { queue: "P-04", time: "10:15", patient: "Rohan Iyer", doctor: "Dr. Aarav Shah", room: "General-1", cabin: "Cabin G1", reason: "Fever follow-up", status: "Waiting" },
+          { queue: "D-03", time: "11:00", patient: "Nisha Mehta", doctor: "Dr. Kavya Rao", room: "Derma-3", cabin: "Cabin D3", reason: "Skin rash", status: "In queue" },
+          { queue: "DN-02", time: "11:20", patient: "Kabir Soni", doctor: "Dr. Imran Khan", room: "Dental-1", cabin: "Cabin DN1", reason: "Tooth pain", status: "Waiting" },
+          { queue: "C-02", time: "12:00", patient: "Mira Joshi", doctor: "Dr. Meera Patel", room: "Cardio-2", cabin: "Cabin C2", reason: "ECG review", status: "Completed" }
+        ]
+      }
+    };
+
+    const roleCopy = {
+      patient: ["Patient care dashboard", "Book doctors, manage visits, and keep medical records in one secure place.", "Book appointment"],
+      doctor: ["Doctor workspace", "Manage queue, write notes, create prescriptions, and review patient history.", "Start consultation"],
+      admin: ["Hospital operations", "Track appointments, billing, staff, inventory, lab orders, and branch performance.", "Create visit"]
+    };
+
+    function loadState() {
+      const saved = localStorage.getItem("carebridge-demo");
+      const savedMode = localStorage.getItem("carebridge-mode");
+      if (savedMode && clinicProfiles[savedMode]) {
+        state.clinicMode = savedMode;
+      }
+      document.getElementById("clinicMode").value = state.clinicMode;
+      state.appointments = normalizeAppointments(saved ? JSON.parse(saved) : cloneAppointments(state.clinicMode));
+      const today = new Date().toISOString().slice(0, 10);
+      document.getElementById("visitDate").value = today;
+      applyClinicMode(false);
+    }
+
+    function saveState() {
+      localStorage.setItem("carebridge-demo", JSON.stringify(state.appointments));
+      localStorage.setItem("carebridge-mode", state.clinicMode);
+      toast("Demo data saved in this browser.");
+    }
+
+    function cloneAppointments(mode) {
+      return clinicProfiles[mode].appointments.map(item => ({ ...item }));
+    }
+
+    function normalizeAppointments(appointments) {
+      const profile = clinicProfiles[state.clinicMode];
+      return appointments.map((item, index) => ({
+        queue: item.queue || `${state.clinicMode === "single" ? "Q" : "M"}-${String(index + 1).padStart(2, "0")}`,
+        time: item.time,
+        patient: item.patient,
+        doctor: state.clinicMode === "single" ? "Dr. Meera Patel" : item.doctor,
+        room: item.room || profile.defaultRoom,
+        cabin: item.cabin || profile.defaultCabin,
+        reason: item.reason,
+        status: item.status === "Checked in" ? "Consulting" : item.status || "Waiting"
+      }));
+    }
+
+    function toast(message) {
+      const box = document.getElementById("toast");
+      box.textContent = message;
+      box.classList.add("show");
+      setTimeout(() => box.classList.remove("show"), 2600);
+    }
+
+    function setRole(role) {
+      state.role = role;
+      document.querySelectorAll("[data-role]").forEach(btn => btn.classList.toggle("active", btn.dataset.role === role));
+      const copy = roleCopy[role];
+      document.getElementById("pageTitle").textContent = copy[0];
+      document.getElementById("pageSubtitle").textContent = copy[1];
+      document.getElementById("newAppointmentBtn").textContent = copy[2];
+      renderAppointments();
+    }
+
+    function applyClinicMode(resetQueue = true) {
+      const profile = clinicProfiles[state.clinicMode];
+      document.getElementById("clinicModeBadge").textContent = profile.label;
+      document.getElementById("clinicCapacityLabel").textContent = profile.capacityLabel;
+      document.getElementById("clinicCapacity").textContent = profile.capacity;
+      document.getElementById("clinicCapacityText").textContent = profile.capacityText;
+      document.getElementById("roomNumber").value = profile.defaultRoom;
+      document.getElementById("doctorCabin").value = profile.defaultCabin;
+      if (state.clinicMode === "single") {
+        document.getElementById("doctor").value = "Dr. Meera Patel";
+      }
+      if (resetQueue) {
+        state.appointments = cloneAppointments(state.clinicMode);
+        saveState();
+        toast(`${profile.label} queue loaded.`);
+      }
+      renderAppointments();
+      renderDoctors();
+    }
+
+    function setView(view) {
+      state.view = view;
+      document.querySelectorAll("[data-view]").forEach(btn => btn.classList.toggle("active", btn.dataset.view === view));
+      document.querySelectorAll(".view").forEach(section => section.classList.add("hide"));
+      document.getElementById(view + "View").classList.remove("hide");
+    }
+
+    function renderAppointments() {
+      const rows = document.getElementById("appointmentRows");
+      rows.innerHTML = state.appointments.map((item, index) => {
+        const statusClass = getStatusClass(item.status);
+        return `<tr>
+          <td><strong>${item.queue || "-"}</strong></td>
+          <td>${item.time}</td>
+          <td>${item.patient}</td>
+          <td>${item.doctor}</td>
+          <td>${item.room || "-"}</td>
+          <td>${item.cabin || "-"}</td>
+          <td>${item.reason}</td>
+          <td>
+            <span class="badge ${statusClass}">${item.status}</span>
+            <select class="status-select" data-status-index="${index}" aria-label="Change status for ${item.patient}">
+              ${["Waiting", "In queue", "Consulting", "Completed", "Teleconsult", "Cancelled", "No-show"].map(status => `<option ${status === item.status ? "selected" : ""}>${status}</option>`).join("")}
+            </select>
+          </td>
+        </tr>`;
+      }).join("");
+      document.getElementById("todayCount").textContent = state.appointments.length;
+      document.getElementById("waitingCount").textContent = state.appointments.filter(item => ["Waiting", "In queue"].includes(item.status)).length;
+      document.getElementById("consultingCount").textContent = state.appointments.filter(item => item.status === "Consulting").length;
+    }
+
+    function getStatusClass(status) {
+      if (status === "Consulting") return "active";
+      if (status === "Waiting" || status === "In queue") return "danger";
+      if (status === "Completed") return "done";
+      if (status === "Teleconsult") return "warn";
+      return "";
+    }
+
+    function renderDoctors() {
+      const query = document.getElementById("doctorSearch").value.toLowerCase();
+      const cards = state.doctors.filter(doc => [doc.name, doc.speciality, doc.city].join(" ").toLowerCase().includes(query));
+      document.getElementById("doctorCards").innerHTML = cards.map(doc => `
+        <div class="doctor-card">
+          <strong>${doc.name}</strong>
+          <span class="muted">${doc.speciality} - ${doc.city}</span>
+          <span>${doc.fee} consultation fee</span>
+          <button class="btn primary" type="button" onclick="quickBook('${doc.name}')">Book ${doc.next}</button>
+        </div>
+      `).join("") || `<p class="muted">No matching doctors found.</p>`;
+    }
+
+    function quickBook(name) {
+      document.getElementById("doctor").value = name;
+      setView("appointments");
+      toast("Doctor selected. Confirm the appointment details.");
+    }
+
+    function addAppointment(event) {
+      event.preventDefault();
+      const appointment = {
+        queue: nextQueueNumber(),
+        time: document.getElementById("visitTime").value,
+        patient: document.getElementById("patientName").value,
+        doctor: document.getElementById("doctor").value,
+        room: document.getElementById("roomNumber").value,
+        cabin: document.getElementById("doctorCabin").value,
+        reason: document.getElementById("reason").value.slice(0, 64),
+        status: "In queue"
+      };
+      state.appointments.unshift(appointment);
+      renderAppointments();
+      saveState();
+      toast("Appointment confirmed and added to the live queue.");
+      setView("dashboard");
+    }
+
+    function nextQueueNumber() {
+      const prefix = state.clinicMode === "single" ? "Q" : document.getElementById("speciality").value.slice(0, 1).toUpperCase();
+      const next = String(state.appointments.length + 1).padStart(2, "0");
+      return `${prefix}-${next}`;
+    }
+
+    function runAssistant() {
+      const text = document.getElementById("aiInput").value.toLowerCase();
+      const urgent = /chest|breath|stroke|severe|bleeding/.test(text);
+      const booking = /book|appointment|doctor|tomorrow/.test(text);
+      document.getElementById("aiOutput").innerHTML = `
+        <div class="timeline-item"><strong>Intent</strong><span class="muted">${booking ? "Appointment booking with symptom intake" : "General health query"}</span></div>
+        <div class="timeline-item"><strong>Recommended next step</strong><span class="muted">${booking ? "Offer cardiology slots, collect age and phone number, and confirm clinic or video visit." : "Ask one follow-up question and route to the right service."}</span></div>
+        <div class="timeline-item"><strong>Clinical safety flag</strong><span class="muted">${urgent ? "Chest discomfort mentioned. Show urgent-care guidance and mark for doctor review." : "No emergency phrase detected in this demo."}</span></div>
+        <div class="timeline-item"><strong>Draft patient reply</strong><span class="muted">I can help book this. Because chest discomfort can be serious, please seek urgent care if pain is severe, spreading, or paired with breathlessness. For a routine appointment, cardiology slots are available tomorrow morning.</span></div>
+      `;
+    }
+
+    document.querySelectorAll("[data-role]").forEach(btn => btn.addEventListener("click", () => setRole(btn.dataset.role)));
+    document.querySelectorAll("[data-view]").forEach(btn => btn.addEventListener("click", () => setView(btn.dataset.view)));
+    document.getElementById("clinicMode").addEventListener("change", event => {
+      state.clinicMode = event.target.value;
+      applyClinicMode(true);
+    });
+    document.getElementById("appointmentRows").addEventListener("change", event => {
+      if (!event.target.matches("[data-status-index]")) return;
+      const index = Number(event.target.dataset.statusIndex);
+      state.appointments[index].status = event.target.value;
+      saveState();
+      renderAppointments();
+      toast(`Patient status changed to ${event.target.value}.`);
+    });
+    document.getElementById("newAppointmentBtn").addEventListener("click", () => setView("appointments"));
+    document.getElementById("appointmentForm").addEventListener("submit", addAppointment);
+    document.getElementById("doctorSearch").addEventListener("input", renderDoctors);
+    document.getElementById("saveDemoBtn").addEventListener("click", saveState);
+    document.getElementById("clearAppointments").addEventListener("click", () => {
+      localStorage.removeItem("carebridge-demo");
+      state.appointments = cloneAppointments(state.clinicMode);
+      renderAppointments();
+      toast("Local demo bookings reset.");
+    });
+    document.getElementById("generateRx").addEventListener("click", () => toast("Prescription draft created from the doctor note."));
+    document.getElementById("sendLab").addEventListener("click", () => toast("Lab order added: ECG, lipid profile, CBC."));
+    document.getElementById("aiRun").addEventListener("click", runAssistant);
+
+    loadState();
+    renderAppointments();
+    renderDoctors();
+  </script>
+</body>
+</html>
